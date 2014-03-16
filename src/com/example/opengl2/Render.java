@@ -14,8 +14,11 @@ import android.opengl.GLSurfaceView.Renderer;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
+import android.widget.Button;
+import android.widget.ToggleButton;
 
 public class Render extends GLSurfaceView implements Renderer {
+
 
 	/** Triangle instance /
 	private Triangle triangle;
@@ -73,6 +76,10 @@ public class Render extends GLSurfaceView implements Renderer {
 	private float oldX;
     private float oldY;
 	private final float TOUCH_SCALE = 0.01f;		//Proved to be good for normal rotation ( NEW )
+	private final int NONE = -1;
+	private final int ARBOL = 0;
+	private final int CASA = 1;
+	private int selected = NONE;
 	
 	private ScaleGestureDetector scaleGestureDetector;
 	private float scaleFactor = 1.0f;
@@ -158,7 +165,7 @@ public class Render extends GLSurfaceView implements Renderer {
 		} else {
 			gl.glDisable(GL10.GL_LIGHTING);
 		}
-		
+				
 		/*
 		 * Minor changes to the original tutorial
 		 * 
@@ -169,14 +176,17 @@ public class Render extends GLSurfaceView implements Renderer {
 		gl.glTranslatef(-2.0f, -1.2f, -10.0f);	//Move down 1.2 Unit And Into The Screen 6.0
 		//gl.glRotatef(rquad, 1.0f, 1.0f, 0.0f);
 		
-		
-		gl.glTranslatef(xmov, ymov, 0.0f);
-		
-		//SCALATION
-		gl.glScalef(scaleFactor, scaleFactor, scaleFactor);		
-		//Rotate around the axis based on the rotation matrix (rotation, x, y, z)
-		gl.glRotatef(xrot, 1.0f, 0.0f, 0.0f);	//X
-		gl.glRotatef(yrot, 0.0f, 1.0f, 0.0f);	//Y
+		if(selected == CASA)
+		{
+			gl.glTranslatef(xmov, ymov, 0.0f);
+			
+			//SCALATION
+			gl.glScalef(scaleFactor, scaleFactor, scaleFactor);		
+			
+			//Rotate around the axis based on the rotation matrix (rotation, x, y, z)
+			gl.glRotatef(xrot, 1.0f, 0.0f, 0.0f);	//X
+			gl.glRotatef(yrot, 0.0f, 1.0f, 0.0f);	//Y
+		}
 		
 		casa.draw(gl);						//Draw the square
 				
@@ -195,7 +205,18 @@ public class Render extends GLSurfaceView implements Renderer {
 		
 		//Tronco
 		gl.glTranslatef(2.0f, -1.2f, -10.0f);
-		gl.glRotatef(rquad, 1.0f, 1.0f, 0.0f);
+		
+		if(selected == ARBOL)
+		{
+			gl.glTranslatef(xmov, ymov, 0.0f);		
+			//	SCALATION
+			gl.glScalef(scaleFactor, scaleFactor, scaleFactor);
+			//Rotate around the axis based on the rotation matrix (rotation, x, y, z)
+			gl.glRotatef(xrot, 1.0f, 0.0f, 0.0f);	//X
+			gl.glRotatef(yrot, 0.0f, 1.0f, 0.0f);	//Y
+		}
+		
+		//gl.glRotatef(rquad, 1.0f, 1.0f, 0.0f);
 		//gl.glScalef(scaleFactor, scaleFactor, scaleFactor);
 		tronco.draw(gl);		
 		
@@ -239,7 +260,7 @@ public class Render extends GLSurfaceView implements Renderer {
 	public boolean onTouchEvent(MotionEvent event) {
 		if(event.getPointerCount() == 2)
 		{	
-			scaleGestureDetector.onTouchEvent(event);								
+				scaleGestureDetector.onTouchEvent(event);								
 		}	
 		else if(event.getPointerCount() == 3)
 		{
@@ -266,8 +287,18 @@ public class Render extends GLSurfaceView implements Renderer {
 	        
 	        //A press on the screen
 	        if(event.getAction() == MotionEvent.ACTION_UP) {
-	        	//gl.glRotatef(rtri, 0.0f, 1.0f, 0.0f);
-	    		//techo.draw(gl);	
+	        	int leftArea = this.getWidth() / 2;
+	        	int upperArea = this.getHeight() / 10;
+	        	int lowerArea = this.getHeight() - upperArea;
+	        	if(y > lowerArea)
+	        	{
+	        		if(x < leftArea)
+	        			selected = CASA;
+	        		else
+	        			selected = ARBOL;	        			
+	        	}
+	        	else if( y < upperArea )
+	        		selected = NONE;
 	        	//light = !light;
 	        	
 	        }

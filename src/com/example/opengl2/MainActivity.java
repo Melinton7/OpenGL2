@@ -5,6 +5,8 @@ import android.app.Activity;
 import android.view.Menu;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.Button;
+import android.widget.ToggleButton;
 
 import android.opengl.GLSurfaceView;
 
@@ -13,6 +15,9 @@ public class MainActivity extends Activity {
 
 	/** The OpenGL View */
 	private Render render;
+	private ToggleButton toggleButton1, toggleButton2;
+	private Button btnDisplay;
+		
 	
 	/**
 	 * Initiate the OpenGL View and set our own
