@@ -12,7 +12,7 @@ import android.opengl.GLSurfaceView;
 public class MainActivity extends Activity {
 
 	/** The OpenGL View */
-	private GLSurfaceView glSurface;
+	private Render render;
 	
 	/**
 	 * Initiate the OpenGL View and set our own
@@ -22,11 +22,12 @@ public class MainActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);		
 		//Create an Instance with this Activity
-		glSurface = new GLSurfaceView(this);
+		//glSurface = new GLSurfaceView(this);
 		//Set our own Renderer
-		glSurface.setRenderer(new Render(this));
+		//glSurface.setRenderer(new Render(this));
 		//Set the GLSurface as View to this Activity
-		setContentView(glSurface);
+		render = new Render(this);
+		setContentView(render);
 	}
 
 	/**
@@ -35,7 +36,7 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		glSurface.onResume();
+		render.onResume();
 	}
 
 	/**
@@ -44,7 +45,7 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onPause() {
 		super.onPause();
-		glSurface.onPause();
+		render.onPause();
 	}
 
 }

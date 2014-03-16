@@ -23,6 +23,13 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <ToggleButton 
+			    android:id="@+id/togglebutton"
+			    android:layout_width="wrap_content"
+			    android:layout_height="wrap_content"
+			    android:textOn="Vibrate on"
+			    android:textOff="Vibrate off"
+			    android:onClick="onToggleClicked"/>
         </activity>
     </application>
 

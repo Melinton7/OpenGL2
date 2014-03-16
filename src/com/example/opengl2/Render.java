@@ -1,5 +1,9 @@
 package com.example.opengl2;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
+
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
@@ -7,9 +11,11 @@ import android.content.Context;
 import android.opengl.GLSurfaceView;
 import android.opengl.GLU;
 import android.opengl.GLSurfaceView.Renderer;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 
-public class Render implements Renderer {
+public class Render extends GLSurfaceView implements Renderer {
 
 	/** Triangle instance /
 	private Triangle triangle;
@@ -25,9 +31,52 @@ public class Render implements Renderer {
 	private Hojas hojas;
 	private Tronco tronco;
 	
+
+	/* Rotation values */
+	private float xrot;					//X Rotation
+	private float yrot;					//Y Rotation
+
+	/* Rotation speed values */
+	private float xspeed;				//X Rotation Speed ( NEW )
+	private float yspeed;				//Y Rotation Speed ( NEW )
 	
-	/** Angle For The Pyramid */
-	private float rtri; 	
+	/* Move values */
+	private float xmov;
+	private float ymov;
+	
+	private float z = -5.0f;			//Depth Into The Screen ( NEW )
+	
+	private int filter = 0;				//Which texture filter? ( NEW )
+	
+	/** Is light enabled ( NEW ) */
+	private boolean light = false;
+
+	/* 
+	 * The initial light values for ambient and diffuse
+	 * as well as the light position ( NEW ) 
+	 */
+	private float[] lightAmbient = {0.5f, 0.5f, 0.5f, 1.0f};
+	private float[] lightDiffuse = {1.0f, 1.0f, 1.0f, 1.0f};
+	private float[] lightPosition = {0.0f, 0.0f, 2.0f, 1.0f};
+		
+	/* The buffers for our light values ( NEW ) */
+	private FloatBuffer lightAmbientBuffer;
+	private FloatBuffer lightDiffuseBuffer;
+	private FloatBuffer lightPositionBuffer;
+	
+	/*
+	 * These variables store the previous X and Y
+	 * values as well as a fix touch scale factor.
+	 * These are necessary for the rotation transformation
+	 * added to this lesson, based on the screen touches. ( NEW )
+	 */
+	private float oldX;
+    private float oldY;
+	private final float TOUCH_SCALE = 0.01f;		//Proved to be good for normal rotation ( NEW )
+	
+	private ScaleGestureDetector scaleGestureDetector;
+	private float scaleFactor = 1.0f;
+	
 	/** Angle For The Cube */
 	private float rquad; 
 	
@@ -36,7 +85,35 @@ public class Render implements Renderer {
 	 * Instance the Triangle and Square objects
 	 */
 	public Render(Context context) {
+		super(context);
 		this.context = context;
+		this.setRenderer(this);
+		this.requestFocus();
+		this.setFocusableInTouchMode(true);
+		scaleGestureDetector = new ScaleGestureDetector(context,
+		        new ScaleListener());
+		//
+		ByteBuffer byteBuf = ByteBuffer.allocateDirect(lightAmbient.length * 4);
+		byteBuf.order(ByteOrder.nativeOrder());
+		lightAmbientBuffer = byteBuf.asFloatBuffer();
+		lightAmbientBuffer.put(lightAmbient);
+		lightAmbientBuffer.position(0);
+		
+		byteBuf = ByteBuffer.allocateDirect(lightDiffuse.length * 4);
+		byteBuf.order(ByteOrder.nativeOrder());
+		lightDiffuseBuffer = byteBuf.asFloatBuffer();
+		lightDiffuseBuffer.put(lightDiffuse);
+		lightDiffuseBuffer.position(0);
+		
+		byteBuf = ByteBuffer.allocateDirect(lightPosition.length * 4);
+		byteBuf.order(ByteOrder.nativeOrder());
+		lightPositionBuffer = byteBuf.asFloatBuffer();
+		lightPositionBuffer.put(lightPosition);
+		lightPositionBuffer.position(0);
+		
+		
+		
+		
 		techo = new Techo();
 		casa = new Casa();
 		hojas = new Hojas();
@@ -48,10 +125,14 @@ public class Render implements Renderer {
 	 * The Surface is created/init()
 	 */
 	public void onSurfaceCreated(GL10 gl, EGLConfig config) {	
-		casa.loadGLTexture(gl, this.context);
+		//And there'll be light!
+		gl.glLightfv(GL10.GL_LIGHT0, GL10.GL_AMBIENT, lightAmbientBuffer);		//Setup The Ambient Light ( NEW )
+		gl.glLightfv(GL10.GL_LIGHT0, GL10.GL_DIFFUSE, lightDiffuseBuffer);		//Setup The Diffuse Light ( NEW )
+		gl.glLightfv(GL10.GL_LIGHT0, GL10.GL_POSITION, lightPositionBuffer);	//Position The Light ( NEW )
+		gl.glEnable(GL10.GL_LIGHT0);											//Enable Light 0 ( NEW )					
 		
-		gl.glEnable(GL10.GL_TEXTURE_2D);
-		
+		gl.glDisable(GL10.GL_DITHER);
+		gl.glEnable(GL10.GL_TEXTURE_2D);		
 		gl.glShadeModel(GL10.GL_SMOOTH); 			//Enable Smooth Shading
 		gl.glClearColor(0.0f, 0.0f, 0.0f, 0.5f); 	//Black Background
 		gl.glClearDepthf(1.0f); 					//Depth Buffer Setup
@@ -60,6 +141,8 @@ public class Render implements Renderer {
 		
 		//Really Nice Perspective Calculations
 		gl.glHint(GL10.GL_PERSPECTIVE_CORRECTION_HINT, GL10.GL_NICEST); 
+		
+		casa.loadGLTexture(gl, this.context);
 	}
 	
 	/**
@@ -70,6 +153,12 @@ public class Render implements Renderer {
 		gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);	
 		gl.glLoadIdentity();					//Reset The Current Modelview Matrix
 		
+		if(light) {
+			gl.glEnable(GL10.GL_LIGHTING);
+		} else {
+			gl.glDisable(GL10.GL_LIGHTING);
+		}
+		
 		/*
 		 * Minor changes to the original tutorial
 		 * 
@@ -78,7 +167,17 @@ public class Render implements Renderer {
 		 * the current instance
 		 */
 		gl.glTranslatef(-2.0f, -1.2f, -10.0f);	//Move down 1.2 Unit And Into The Screen 6.0
-		gl.glRotatef(rquad, 1.0f, 1.0f, 0.0f);
+		//gl.glRotatef(rquad, 1.0f, 1.0f, 0.0f);
+		
+		
+		gl.glTranslatef(xmov, ymov, 0.0f);
+		
+		//SCALATION
+		gl.glScalef(scaleFactor, scaleFactor, scaleFactor);		
+		//Rotate around the axis based on the rotation matrix (rotation, x, y, z)
+		gl.glRotatef(xrot, 1.0f, 0.0f, 0.0f);	//X
+		gl.glRotatef(yrot, 0.0f, 1.0f, 0.0f);	//Y
+		
 		casa.draw(gl);						//Draw the square
 				
 		//Reset Modelview
@@ -92,11 +191,12 @@ public class Render implements Renderer {
 		techo.draw(gl);						//Draw the triangle	
 		
 		//Reset
-		gl.glLoadIdentity();
+		gl.glLoadIdentity();		
 		
 		//Tronco
 		gl.glTranslatef(2.0f, -1.2f, -10.0f);
 		gl.glRotatef(rquad, 1.0f, 1.0f, 0.0f);
+		//gl.glScalef(scaleFactor, scaleFactor, scaleFactor);
 		tronco.draw(gl);		
 		
 		//Hojas
@@ -104,9 +204,10 @@ public class Render implements Renderer {
 		hojas.draw(gl);
 		
 		
+		xrot += yspeed;
+		yrot  += yspeed;
 		
-		
-		rtri +=0.5f;
+		//rtri +=0.5f;
 		rquad += 0.5f;
 	}	
 	
@@ -136,19 +237,77 @@ public class Render implements Renderer {
 	 * React to moves and presses on the touchscreen.
 	 */
 	public boolean onTouchEvent(MotionEvent event) {
-		//
-		float x = event.getX();
-        float y = event.getY();
+		if(event.getPointerCount() == 2)
+		{	
+			scaleGestureDetector.onTouchEvent(event);								
+		}	
+		else if(event.getPointerCount() == 3)
+		{
+			if(event.getAction() == MotionEvent.ACTION_MOVE)
+			{
+				float x = event.getX();
+		        float y = event.getY();
+				
+				float dx = x - oldX;
+				float dy = y - oldY;
+				
+				ymov -= dy*TOUCH_SCALE;
+				xmov += dx*TOUCH_SCALE;
+				
+				oldX = x;
+				oldY = y;
+			}	
+		}		
+		else
+		{
+			//
+			float x = event.getX();
+	        float y = event.getY();
+	        
+	        //A press on the screen
+	        if(event.getAction() == MotionEvent.ACTION_UP) {
+	        	//gl.glRotatef(rtri, 0.0f, 1.0f, 0.0f);
+	    		//techo.draw(gl);	
+	        	//light = !light;
+	        	
+	        }
+	        if(event.getAction() == MotionEvent.ACTION_MOVE)
+	        {
+	        	float dx = x - oldX;
+	        	float dy = y - oldY;
+	        	
+	        	xrot += dy;
+	        	yrot += dx;
+	        	
+	        }
+	        oldX = x;
+	        oldY = y;
+		}
         
-        //A press on the screen
-        if(event.getAction() == MotionEvent.ACTION_UP) {
-        	//gl.glRotatef(rtri, 0.0f, 1.0f, 0.0f);
-    		//techo.draw(gl);	
-        }
-        
+
         //We handled the event
 		return true;
 	}
+	
+	 
+	/**
+	 * Clase que maneja la escala para escalar objetos
+	 * @author Melinton
+	 *
+	 */
+	private class ScaleListener extends
+     ScaleGestureDetector.SimpleOnScaleGestureListener {
+   @Override
+   public boolean onScale(ScaleGestureDetector detector) {
+     scaleFactor *= detector.getScaleFactor();
+
+     // don't let the object get too small or too large.
+     scaleFactor = Math.max(0.1f, Math.min(scaleFactor, 5.0f));
+
+     invalidate();
+     return true;
+   }
+ }
 	
 	
 

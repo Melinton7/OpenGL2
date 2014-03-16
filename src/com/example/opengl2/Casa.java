@@ -20,6 +20,8 @@ public class Casa {
 	private FloatBuffer textureBuffer;
 	/** The buffer holding the indices */
 	private ByteBuffer  indexBuffer;
+	/** The buffer holding the normals */
+	private FloatBuffer normalBuffer;	
 	
 	private int[] textures = new int[1];
 	
@@ -60,7 +62,40 @@ public class Casa {
 			            1.0f,  1.0f,  1.0f,		//upper front right (23)
 			            -1.0f,  1.0f,  1.0f,	//upper front left (24)
 			            -1.0f, 0.25f, 1.0f,		//mid wall left (25)
-			    							};						 					
+			    							};		
+	
+	private float normals[] = {
+			// Normals
+			0.0f, 0.0f, 1.0f, 						
+			0.0f, 0.0f, -1.0f, 
+			0.0f, 1.0f, 0.0f, 
+			0.0f, -1.0f, 0.0f, 
+			
+			0.0f, 0.0f, 1.0f, 
+			0.0f, 0.0f, -1.0f, 
+			0.0f, 1.0f, 0.0f, 
+			0.0f, -1.0f, 0.0f,
+			
+			0.0f, 0.0f, 1.0f, 
+			0.0f, 0.0f, -1.0f, 
+			0.0f, 1.0f, 0.0f, 
+			0.0f, -1.0f, 0.0f,
+			
+			0.0f, 0.0f, 1.0f, 
+			0.0f, 0.0f, -1.0f, 
+			0.0f, 1.0f, 0.0f, 
+			0.0f, -1.0f, 0.0f,
+			
+			0.0f, 0.0f, 1.0f, 
+			0.0f, 0.0f, -1.0f, 
+			0.0f, 1.0f, 0.0f, 
+			0.0f, -1.0f, 0.0f,
+			
+			0.0f, 0.0f, 1.0f, 
+			0.0f, 0.0f, -1.0f, 
+			0.0f, 1.0f, 0.0f, 
+			0.0f, -1.0f, 0.0f,
+								};
     
     /** The initial color definition */	
 	private float texture[] = {
@@ -89,7 +124,12 @@ public class Casa {
 						0.325f, 0.625f,
 						0.675f, 0.625f,
 						0.675f, 0.0f, 
-						1.0f, 0.0f
+						1.0f, 0.0f,
+						1.0f, 0.625f,
+						1.0f, 1.0f, 
+						0.0f, 1.0f,
+						0.0f, 0.625f
+						
 						
 						
 			            /*0.0f,  1.0f,  0.0f,  1.0f,
@@ -119,6 +159,7 @@ public class Casa {
 						4, 5, 6,	4, 6, 7,
 						8, 9, 10, 	8, 10, 11,
 						12, 13, 14,	12, 14, 15,
+						
 						16, 17, 18,	16, 18, 25,
 						20, 21, 22,	20, 22, 19,
 						24, 25, 22,	24, 22, 23
@@ -154,6 +195,13 @@ public class Casa {
 		textureBuffer.put(texture);
 		textureBuffer.position(0);
 		
+		//
+		byteBuf = ByteBuffer.allocateDirect(normals.length * 4);
+		byteBuf.order(ByteOrder.nativeOrder());
+		normalBuffer = byteBuf.asFloatBuffer();
+		normalBuffer.put(normals);
+		normalBuffer.position(0);
+		
 		/**/
 		indexBuffer = ByteBuffer.allocateDirect(indices.length);
 		indexBuffer.put(indices);
@@ -173,18 +221,20 @@ public class Casa {
 		
 		gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
 		gl.glEnableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
+		gl.glEnableClientState(GL10.GL_NORMAL_ARRAY);
 		
 		gl.glFrontFace(GL10.GL_CCW);
 		
 		//Point to our buffers
 		gl.glVertexPointer(3, GL10.GL_FLOAT, 0, vertexBuffer);
 		gl.glTexCoordPointer(2,  GL10.GL_FLOAT, 0, textureBuffer);
+		gl.glNormalPointer(GL10.GL_FLOAT, 0, normalBuffer);
 		//gl.glColorPointer(4, GL10.GL_FLOAT, 0, colorBuffer);
 		
 		//Enable the vertex and color state
 		//gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
 		//gl.glEnableClientState(GL10.GL_COLOR_ARRAY);
-		//gl.glColor4f(0.933f, 0.910f, 0.667f, 1.0f);		
+		gl.glColor4f(0.933f, 0.910f, 0.667f, 1.0f);		
 		
 		//Draw the vertices as triangles, based on the Index Buffer information
 		gl.glDrawElements(GL10.GL_TRIANGLES, indices.length, GL10.GL_UNSIGNED_BYTE, indexBuffer);
@@ -192,7 +242,10 @@ public class Casa {
 		
 		//Disable the client state before leaving
 		gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
-		gl.glDisableClientState(GL10.GL_COLOR_ARRAY);
+		//UNCOMMENT TO STOP TEXTURE
+		//gl.glDisableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
+		//UNCOMMENT TO STOP LIGHT
+		//gl.glDisableClientState(GL10.GL_NORMAL_ARRAY);
 	}
 	
 	/**
