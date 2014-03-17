@@ -35,6 +35,14 @@ public class Render extends GLSurfaceView implements Renderer {
 	private Hojas hojas;
 	private Tronco tronco;
 	
+	private int fogFilter = 0;			//Which Fog To Use ( NEW ) 	
+	private int fogMode[]= { 			
+			GL10.GL_EXP, 
+			GL10.GL_EXP2, 
+			GL10.GL_LINEAR 
+						};		
+	private float[] fogColor = {0.5f, 0.5f, 0.5f, 1.0f};
+	private FloatBuffer fogColorBuffer;	//The Fog Color Buffer  ( NEW )
 
 	/* Rotation values */
 	private float xrot;					//X Rotation
@@ -133,7 +141,12 @@ public class Render extends GLSurfaceView implements Renderer {
 		lightPositionBuffer.put(lightPosition);
 		lightPositionBuffer.position(0);
 		
-		
+		//Build the new Buffer ( NEW )
+		byteBuf = ByteBuffer.allocateDirect(fogColor.length * 4);
+		byteBuf.order(ByteOrder.nativeOrder());
+		fogColorBuffer = byteBuf.asFloatBuffer();
+		fogColorBuffer.put(fogColor);
+		fogColorBuffer.position(0);						
 		
 		
 		techo = new Techo();
@@ -156,11 +169,20 @@ public class Render extends GLSurfaceView implements Renderer {
 		gl.glDisable(GL10.GL_DITHER);
 		gl.glEnable(GL10.GL_TEXTURE_2D);		
 		gl.glShadeModel(GL10.GL_SMOOTH); 			//Enable Smooth Shading
-		gl.glClearColor(0.0f, 0.0f, 0.0f, 0.5f); 	//Black Background
+		gl.glClearColor(0.45f, 0.45f, 0.45f, 1.0f); 	//Foggy Background
 		gl.glClearDepthf(1.0f); 					//Depth Buffer Setup
 		gl.glEnable(GL10.GL_DEPTH_TEST); 			//Enables Depth Testing
 		gl.glDepthFunc(GL10.GL_LEQUAL); 			//The Type Of Depth Testing To Do
 		
+		//The Fog/The Mist
+		gl.glFogf(GL10.GL_FOG_MODE, fogMode[fogFilter]);	//Fog Mode ( NEW )
+		gl.glFogfv(GL10.GL_FOG_COLOR, fogColorBuffer);		//Set Fog Color ( NEW )
+		gl.glFogf(GL10.GL_FOG_DENSITY, 0.05f);				//How Dense Will The Fog Be ( NEW )
+		gl.glHint(GL10.GL_FOG_HINT, GL10.GL_DONT_CARE);		//Fog Hint Value ( NEW )
+		gl.glFogf(GL10.GL_FOG_START, 1.0f);					//Fog Start Depth ( NEW )
+		gl.glFogf(GL10.GL_FOG_END, 5.0f);					//Fog End Depth ( NEW )
+		gl.glEnable(GL10.GL_FOG);							//Enables GL_FOG ( NEW )		
+
 		//Really Nice Perspective Calculations
 		gl.glHint(GL10.GL_PERSPECTIVE_CORRECTION_HINT, GL10.GL_NICEST); 
 		
@@ -180,6 +202,9 @@ public class Render extends GLSurfaceView implements Renderer {
 		} else {
 			gl.glDisable(GL10.GL_LIGHTING);
 		}
+		
+		//Set Fog Mode ( NEW )
+		gl.glFogf(GL10.GL_FOG_MODE, fogMode[fogFilter]);		
 				
 		/*
 		 * Minor changes to the original tutorial
@@ -214,7 +239,6 @@ public class Render extends GLSurfaceView implements Renderer {
 		gl.glTranslatef(0.0f, 2.0f, 0.0f);//-2.0f, 0.8f, -10.0f);		
 		//gl.glRotatef(rtri, 0.0f, 1.0f, 0.0f);
 		techo.draw(gl);						//Draw the triangle
-		
 		
 		//gl.glTranslatef(-2.0f, -1.2f, -10.0f);//-2.0f, -1.2f, -10.0f);
 		gl.glTranslatef(0.0f, -2.0f, 0f);
@@ -372,7 +396,14 @@ public class Render extends GLSurfaceView implements Renderer {
 	        	else if( y < upperArea )
 	        	{
 	        		if( x < leftArea)
-	        			selected = NONE;
+	        		{
+	        			fogFilter += 1; 	//Increase fogFilter By One ( NEW )
+						
+						//Is fogFilter Greater Than 2? ( NEW )
+						if(fogFilter > 2) {
+							fogFilter = 0; 	//If So, Set fogFilter To Zero back again ( NEW )
+						}
+	        		}
 	        		else
 	        		{
 	        			changeDoorState = true;
