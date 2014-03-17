@@ -14,22 +14,19 @@ import android.opengl.GLUtils;
 
 public class Casa {
 	
-	/** The buffer holding the vertices */
+	/** Buffer para vertices */
 	private FloatBuffer vertexBuffer;
-	/** The buffer holding the color values */
+	/** Buffer para la textura*/
 	private FloatBuffer textureBuffer;
-	/** The buffer holding the indices */
+	/** Buffer para los indexes (dibujo de triángulos) */
 	private ByteBuffer  indexBuffer;
-	/** The buffer holding the normals */
+	/** Buffer para las normales (luz) */
 	private FloatBuffer normalBuffer;	
 	
 	private int[] textures = new int[1];
 	
 	/** 
-	 * The initial vertex definition
-	 * 
-	 * It defines the eight vertices a cube has
-	 * based on the OpenGL coordinate system
+	 * Definición de vértices. 4 por cara y 6 para enfrente (hoyo d ela puerta)
 	 **/
 	private float vertices[] = {
 			            -1.0f, -1.0f, -1.0f,	//lower back left (0)
@@ -65,7 +62,7 @@ public class Casa {
 			    							};		
 	
 	private float normals[] = {
-			// Normals
+			// Normales
 			0.0f, 0.0f, 1.0f, 						
 			0.0f, 0.0f, -1.0f, 
 			0.0f, 1.0f, 0.0f, 
@@ -97,7 +94,7 @@ public class Casa {
 			0.0f, -1.0f, 0.0f,
 								};
     
-    /** The initial color definition */	
+    /** Definición del mapeo de la textura */	
 	private float texture[] = {
 						0.0f, 0.0f,
 						1.0f, 0.0f,
@@ -128,33 +125,14 @@ public class Casa {
 						1.0f, 0.625f,
 						1.0f, 1.0f, 
 						0.0f, 1.0f,
-						0.0f, 0.625f
-						
-						
-						
-			            /*0.0f,  1.0f,  0.0f,  1.0f,
-			            0.0f,  1.0f,  0.0f,  1.0f,
-			            1.0f,  0.5f,  0.0f,  1.0f,
-			            1.0f,  0.5f,  0.0f,  1.0f,
-			            1.0f,  0.0f,  0.0f,  1.0f,
-			            1.0f,  0.0f,  0.0f,  1.0f,
-			            0.0f,  0.0f,  1.0f,  1.0f,
-			            1.0f,  0.0f,  1.0f,  1.0f*/
+						0.0f, 0.625f						
 			    								};
 	
 	/** 
-     * The initial indices definition
+     * Definición de indices, se cierran triángulos para dibujarlos
      * 
-     * The indices define our triangles.
-     * Always two define one of the six faces
-     * a cube has.
      *	*/
 	private byte indices[] = {
-    					/*
-    					 * Example: 
-    					 * Face made of the vertices lower back left (lbl),
-    					 * lfl, lfr, lbl, lfr, lbr
-    					 **/
 						0, 1, 2,	0, 2, 3,
 						4, 5, 6,	4, 6, 7,
 						8, 9, 10, 	8, 10, 11,
@@ -163,22 +141,12 @@ public class Casa {
 						16, 17, 18,	16, 18, 25,
 						20, 21, 22,	20, 22, 19,
 						24, 25, 22,	24, 22, 23
-						
-			            /*0, 4, 9,    0, 9, 1,
-			            //and so on...
-			            1, 9, 11,    1, 11, 2,
-			            2, 11, 12,    2, 12, 3,
-			            3, 12, 4,    3, 4, 0,
-						12, 13, 10,		12, 10, 11,
-						13, 4, 5,		13, 5, 6,
-						7, 8, 9,		7, 9, 10,												
-			            3, 0, 1,    3, 1, 2*/
-    										};
+	};
 	
 	/**
-	 * The Cube constructor.
+	 * Constructor de la casa.
 	 * 
-	 * Initiate the buffers.
+	 * Inicialización de los buffers.
 	 */
 	public Casa() {
 		//
@@ -209,14 +177,11 @@ public class Casa {
 	}
 	
 	/**
-	 * The object own drawing function.
-	 * Called from the renderer to redraw this instance
-	 * with possible changes in values.
+	 * La función que se utiliza para dibujar
 	 * 
-	 * @param gl - The GL Context
+	 * @param gl - GL Context
 	 */
 	public void draw(GL10 gl) {		
-		//Set the face rotation
 		gl.glBindTexture(GL10.GL_TEXTURE_2D, textures[0]);
 		
 		gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
@@ -229,16 +194,12 @@ public class Casa {
 		gl.glVertexPointer(3, GL10.GL_FLOAT, 0, vertexBuffer);
 		gl.glTexCoordPointer(2,  GL10.GL_FLOAT, 0, textureBuffer);
 		gl.glNormalPointer(GL10.GL_FLOAT, 0, normalBuffer);
-		//gl.glColorPointer(4, GL10.GL_FLOAT, 0, colorBuffer);
 		
-		//Enable the vertex and color state
-		//gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
-		//gl.glEnableClientState(GL10.GL_COLOR_ARRAY);
+		//Habilitar color state
 		gl.glColor4f(0.933f, 0.910f, 0.667f, 1.0f);		
 		
-		//Draw the vertices as triangles, based on the Index Buffer information
+		//Se dibujan los vertices basados en las matrices definidas anteriormente
 		gl.glDrawElements(GL10.GL_TRIANGLES, indices.length, GL10.GL_UNSIGNED_BYTE, indexBuffer);
-		//gl.glDrawArrays(GL10.GL_TRIANGLES, 0, vertices.length / 3);
 		
 		//Disable the client state before leaving
 		gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
@@ -249,7 +210,7 @@ public class Casa {
 	}
 	
 	/**
-	 * Load the textures
+	 * Cargar las texturas
 	 * 
 	 * @param gl - The GL Context
 	 * @param context - The Activity context

@@ -12,81 +12,61 @@ import android.media.MediaPlayer;
 import android.opengl.GLSurfaceView;
 import android.opengl.GLU;
 import android.opengl.GLSurfaceView.Renderer;
-import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
-import android.widget.Button;
-import android.widget.ToggleButton;
 
 public class Render extends GLSurfaceView implements Renderer {
 
-
-	/** Triangle instance /
-	private Triangle triangle;
-	/** Square instance /
-	private Square square;
 	
-	/** Pyramid instance */
+	/** Instancia del techo */
 	private Techo techo;
-	/** Cube instance */
-	private Casa casa;
-	private Puerta puerta;
 	
+	/** Instancia de la casa y puerta */
+	private Casa casa;
+	private Puerta puerta;	
 	private Hojas hojas;
 	private Tronco tronco;
 	
-	private int fogFilter = 0;			//Which Fog To Use ( NEW ) 	
-	private int fogMode[]= { 			
+	private int fogFilter = 0;			//Filtro para definir cuál se va a utilizar
+	private int fogMode[]= { 			//Opciones de fog
 			GL10.GL_EXP, 
 			GL10.GL_EXP2, 
 			GL10.GL_LINEAR 
 						};		
 	private float[] fogColor = {0.5f, 0.5f, 0.5f, 1.0f};
-	private FloatBuffer fogColorBuffer;	//The Fog Color Buffer  ( NEW )
+	private FloatBuffer fogColorBuffer;	
 
-	/* Rotation values */
+	/* Valores de rotación */
 	private float xrot;					//X Rotation
 	private float yrot;					//Y Rotation
 
-	/* Rotation speed values */
-	private float xspeed;				//X Rotation Speed ( NEW )
-	private float yspeed;				//Y Rotation Speed ( NEW )
+	/* Valores de velocidad de rotación */
+	private float xspeed;				
+	private float yspeed;				
 	
 	/* Move values */
 	private float xmov;
 	private float ymov;
 	
-
 	
-	private float z = -5.0f;			//Depth Into The Screen ( NEW )
-	
-	private int filter = 0;				//Which texture filter? ( NEW )
-	
-	/** Is light enabled ( NEW ) */
+	/** Booleano para definir activación de luz */
 	private boolean light = false;
 
 	/* 
-	 * The initial light values for ambient and diffuse
-	 * as well as the light position ( NEW ) 
+	* Valores iniciales para la posición de luz
 	 */
 	private float[] lightAmbient = {0.5f, 0.5f, 0.5f, 1.0f};
 	private float[] lightDiffuse = {1.0f, 1.0f, 1.0f, 1.0f};
 	private float[] lightPosition = {0.0f, 0.0f, 2.0f, 1.0f};
 		
-	/* The buffers for our light values ( NEW ) */
+	/* Buffers para los valores de la luz */
 	private FloatBuffer lightAmbientBuffer;
 	private FloatBuffer lightDiffuseBuffer;
 	private FloatBuffer lightPositionBuffer;
 	
-	/*
-	 * These variables store the previous X and Y
-	 * values as well as a fix touch scale factor.
-	 * These are necessary for the rotation transformation
-	 * added to this lesson, based on the screen touches. ( NEW )
-	 */
 	private float oldX;
     private float oldY;
-	private final float TOUCH_SCALE = 0.01f;		//Proved to be good for normal rotation ( NEW )
+	private final float TOUCH_SCALE = 0.01f;		//Define una escala de crecimiento para la modificación
 	private final int NONE = -1;
 	private final int ARBOL = 0;
 	private final int CASA = 1;
@@ -100,17 +80,16 @@ public class Render extends GLSurfaceView implements Renderer {
 	private ScaleGestureDetector scaleGestureDetector;
 	private float scaleFactor = 1.0f;
 	
+	/** Media player para manejar el audio */
 	private final MediaPlayer mpOpen;
 	private final MediaPlayer mpClose;
 	
-	/** Angle For The Cube */
+	/** Ángulo para manejar la rotación  */
 	private float rquad=0; 
-	private float zquad=0;
 	
 	private Context context;
-	/**
-	 * Instance the Triangle and Square objects
-	 */
+
+	
 	public Render(Context context) {
 		super(context);
 		this.context = context;
@@ -157,43 +136,42 @@ public class Render extends GLSurfaceView implements Renderer {
 	}
 	
 	/**
-	 * The Surface is created/init()
+	 * Se inicia la superficie
 	 */
 	public void onSurfaceCreated(GL10 gl, EGLConfig config) {	
-		//And there'll be light!
-		gl.glLightfv(GL10.GL_LIGHT0, GL10.GL_AMBIENT, lightAmbientBuffer);		//Setup The Ambient Light ( NEW )
-		gl.glLightfv(GL10.GL_LIGHT0, GL10.GL_DIFFUSE, lightDiffuseBuffer);		//Setup The Diffuse Light ( NEW )
-		gl.glLightfv(GL10.GL_LIGHT0, GL10.GL_POSITION, lightPositionBuffer);	//Position The Light ( NEW )
-		gl.glEnable(GL10.GL_LIGHT0);											//Enable Light 0 ( NEW )					
+		//Luz, luz, luz
+		gl.glLightfv(GL10.GL_LIGHT0, GL10.GL_AMBIENT, lightAmbientBuffer);		//Ambient Light 
+		gl.glLightfv(GL10.GL_LIGHT0, GL10.GL_DIFFUSE, lightDiffuseBuffer);		//Diffuse Light 
+		gl.glLightfv(GL10.GL_LIGHT0, GL10.GL_POSITION, lightPositionBuffer);	//Position The Light 
+		gl.glEnable(GL10.GL_LIGHT0);																
 		
 		gl.glDisable(GL10.GL_DITHER);
 		gl.glEnable(GL10.GL_TEXTURE_2D);		
-		gl.glShadeModel(GL10.GL_SMOOTH); 			//Enable Smooth Shading
+		gl.glShadeModel(GL10.GL_SMOOTH); 			
 		gl.glClearColor(0.45f, 0.45f, 0.45f, 1.0f); 	//Foggy Background
-		gl.glClearDepthf(1.0f); 					//Depth Buffer Setup
-		gl.glEnable(GL10.GL_DEPTH_TEST); 			//Enables Depth Testing
-		gl.glDepthFunc(GL10.GL_LEQUAL); 			//The Type Of Depth Testing To Do
+		gl.glClearDepthf(1.0f); 					
+		gl.glEnable(GL10.GL_DEPTH_TEST); 			
+		gl.glDepthFunc(GL10.GL_LEQUAL); 			
 		
-		//The Fog/The Mist
-		gl.glFogf(GL10.GL_FOG_MODE, fogMode[fogFilter]);	//Fog Mode ( NEW )
-		gl.glFogfv(GL10.GL_FOG_COLOR, fogColorBuffer);		//Set Fog Color ( NEW )
-		gl.glFogf(GL10.GL_FOG_DENSITY, 0.05f);				//How Dense Will The Fog Be ( NEW )
-		gl.glHint(GL10.GL_FOG_HINT, GL10.GL_DONT_CARE);		//Fog Hint Value ( NEW )
-		gl.glFogf(GL10.GL_FOG_START, 1.0f);					//Fog Start Depth ( NEW )
-		gl.glFogf(GL10.GL_FOG_END, 5.0f);					//Fog End Depth ( NEW )
+		//The Fog
+		gl.glFogf(GL10.GL_FOG_MODE, fogMode[fogFilter]);	//Fog Mode 
+		gl.glFogfv(GL10.GL_FOG_COLOR, fogColorBuffer);		//Fog Color
+		gl.glFogf(GL10.GL_FOG_DENSITY, 0.05f);				//How Dense 
+		gl.glHint(GL10.GL_FOG_HINT, GL10.GL_DONT_CARE);		
+		gl.glFogf(GL10.GL_FOG_START, 1.0f);					
+		gl.glFogf(GL10.GL_FOG_END, 5.0f);					
 		gl.glEnable(GL10.GL_FOG);							//Enables GL_FOG ( NEW )		
 
-		//Really Nice Perspective Calculations
+		
 		gl.glHint(GL10.GL_PERSPECTIVE_CORRECTION_HINT, GL10.GL_NICEST); 
 		
 		casa.loadGLTexture(gl, this.context);
 	}
 	
 	/**
-	 * Here we do our drawing
+	 * Dibujamos cada frame
 	 */
 	public void onDrawFrame(GL10 gl) {
-		//Clear Screen And Depth Buffer
 		gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);	
 		gl.glLoadIdentity();					//Reset The Current Modelview Matrix
 		
@@ -203,18 +181,11 @@ public class Render extends GLSurfaceView implements Renderer {
 			gl.glDisable(GL10.GL_LIGHTING);
 		}
 		
-		//Set Fog Mode ( NEW )
+		//Set Fog Mode 
 		gl.glFogf(GL10.GL_FOG_MODE, fogMode[fogFilter]);		
 				
-		/*
-		 * Minor changes to the original tutorial
-		 * 
-		 * Instead of drawing our objects here,
-		 * we fire their own drawing methods on
-		 * the current instance
-		 */
-		gl.glTranslatef(-2.0f, -1.2f, -10.0f);	//Move down 1.2 Unit And Into The Screen 6.0
-		//gl.glRotatef(rquad, 1.0f, 1.0f, 0.0f);
+		//Se posiciona en el espacio referencia
+		gl.glTranslatef(-2.0f, -1.2f, -10.0f);	
 		
 		if(selected == CASA)
 		{
@@ -223,69 +194,43 @@ public class Render extends GLSurfaceView implements Renderer {
 			//SCALATION
 			gl.glScalef(scaleFactor, scaleFactor, scaleFactor);		
 			
-			//Rotate around the axis based on the rotation matrix (rotation, x, y, z)
+			//Rotacion
 			gl.glRotatef(xrot, 1.0f, 0.0f, 0.0f);	//X
 			gl.glRotatef(yrot, 0.0f, 1.0f, 0.0f);	//Y
 		}
 		
-		casa.draw(gl);						//Draw the square
-				
-		//Reset Modelview
-		//gl.glLoadIdentity();
-		//gl.glTranslatef(0.0f, 0.0f, 0.0f);
-		//puerta.draw(gl);
-		
+		casa.draw(gl);						
+					
 		//Techo
-		gl.glTranslatef(0.0f, 2.0f, 0.0f);//-2.0f, 0.8f, -10.0f);		
-		//gl.glRotatef(rtri, 0.0f, 1.0f, 0.0f);
-		techo.draw(gl);						//Draw the triangle
-		
-		//gl.glTranslatef(-2.0f, -1.2f, -10.0f);//-2.0f, -1.2f, -10.0f);
-		gl.glTranslatef(0.0f, -2.0f, 0f);
-		
-		
+		gl.glTranslatef(0.0f, 2.0f, 0.0f);	
+		techo.draw(gl);						
+
+		gl.glTranslatef(0.0f, -2.0f, 0f);			
 		if(doorState == DOOR_OPENED)
 		{
-			/*if(rquad < 135)
-				rquad += 5.0f;
-			if(zquad < 1.980f)
-				zquad += 0.740f;*/
 			rquad = 135;
-			gl.glTranslatef(0.0f, 0.0f, 1.980f);// 1.980f);
+			gl.glTranslatef(0.0f, 0.0f, 1.980f);
 			gl.glRotatef(rquad, 0.0f, -1.0f, 0.0f);
-			//gl.glTranslatef(-0.7f, -2.0f, 0.0f);
 		}
 		else if(doorState != NONE)
 		{
-			/*if(rquad > 0)
-				rquad -= 5.0f;
-			if(zquad > 0)
-				zquad -= 0.740f;*/
-			//gl.glTranslatef(-0.1f, -0.0f, 0.0f);
-			//rquad=0;
 			gl.glRotatef(0.0f, 0.0f, 1.0f, 0.0f);
-			//gl.glTranslatef(0.0f, -2.0f, 0.0f);
 		}		
 		if(changeDoorState)
-		{
-			System.out.println("cambio de estado, actual:" + doorState);
-			
+		{	
 			switch (doorState)
 			{
 				case(DOOR_CLOSED):
-					//gl.glTranslatef(-0.5f, 0.0f, 0.0f);
 					mpOpen.start();
 					changeDoorState = false;
 					doorState = DOOR_OPENED;
 					break;
 				case(DOOR_OPENED):
-					//gl.glTranslatef(0.5f,  0.0f, 0.0f);
 					mpClose.start();
 					changeDoorState = false;
 					doorState = DOOR_CLOSED;
 					break;
 				case(NONE):
-					//gl.glTranslatef(0.5f,  0.0f, 0.0f);
 					mpOpen.start();
 					changeDoorState = false;
 					doorState = DOOR_OPENED;
@@ -307,13 +252,10 @@ public class Render extends GLSurfaceView implements Renderer {
 			gl.glTranslatef(xmov, ymov, 0.0f);		
 			//	SCALATION
 			gl.glScalef(scaleFactor, scaleFactor, scaleFactor);
-			//Rotate around the axis based on the rotation matrix (rotation, x, y, z)
 			gl.glRotatef(xrot, 1.0f, 0.0f, 0.0f);	//X
 			gl.glRotatef(yrot, 0.0f, 1.0f, 0.0f);	//Y
 		}
 		
-		//gl.glRotatef(rquad, 1.0f, 1.0f, 0.0f);
-		//gl.glScalef(scaleFactor, scaleFactor, scaleFactor);
 		tronco.draw(gl);		
 		
 		//Hojas
@@ -323,41 +265,39 @@ public class Render extends GLSurfaceView implements Renderer {
 		
 		xrot += xspeed;
 		yrot  += yspeed;
-		
-		//rtri +=0.5f;
-		//rquad += 1.5f;
+
 	}	
 	
 	/**
-	 * If the surface changes, reset the view
+	 * Si la superficie cambia, se actulizan valores
 	 */
 	public void onSurfaceChanged(GL10 gl, int width, int height) {
-		if(height == 0) { 						//Prevent A Divide By Zero By
-			height = 1; 						//Making Height Equal One
+		if(height == 0) { 						//Prevent A Divide By Zero
+			height = 1; 						
 		}
 
-		gl.glViewport(0, 0, width, height); 	//Reset The Current Viewport
-		gl.glMatrixMode(GL10.GL_PROJECTION); 	//Select The Projection Matrix
-		gl.glLoadIdentity(); 					//Reset The Projection Matrix
+		gl.glViewport(0, 0, width, height); 	
+		gl.glMatrixMode(GL10.GL_PROJECTION); 	
+		gl.glLoadIdentity(); 					
 
-		//Calculate The Aspect Ratio Of The Window
+		
 		GLU.gluPerspective(gl, 45.0f, (float)width / (float)height, 0.1f, 100.0f);
 
-		gl.glMatrixMode(GL10.GL_MODELVIEW); 	//Select The Modelview Matrix
-		gl.glLoadIdentity(); 					//Reset The Modelview Matrix
+		gl.glMatrixMode(GL10.GL_MODELVIEW); 	
+		gl.glLoadIdentity(); 					
 	}
 	
 	/* ***** Listener Events ***** */	
 	/**
-	 * Override the touch screen listener.
-	 * 
-	 * React to moves and presses on the touchscreen.
+	* Manejo de toques
 	 */
 	public boolean onTouchEvent(MotionEvent event) {
+		//Si hay 2 dedos, escalar
 		if(event.getPointerCount() == 2)
 		{	
 				scaleGestureDetector.onTouchEvent(event);								
 		}	
+		//Si hay 3, mover
 		else if(event.getPointerCount() == 3)
 		{
 			if(event.getAction() == MotionEvent.ACTION_MOVE)
@@ -377,11 +317,11 @@ public class Render extends GLSurfaceView implements Renderer {
 		}		
 		else
 		{
+			//Si solo hay uno, ver donde tocó
 			//
 			float x = event.getX();
 	        float y = event.getY();
 	        
-	        //A press on the screen
 	        if(event.getAction() == MotionEvent.ACTION_UP) {
 	        	int leftArea = this.getWidth() / 2;
 	        	int upperArea = this.getHeight() / 10;
@@ -397,20 +337,16 @@ public class Render extends GLSurfaceView implements Renderer {
 	        	{
 	        		if( x < leftArea)
 	        		{
-	        			fogFilter += 1; 	//Increase fogFilter By One ( NEW )
-						
-						//Is fogFilter Greater Than 2? ( NEW )
+	        			fogFilter += 1; 	//Aumentar el filtro del fog					
 						if(fogFilter > 2) {
-							fogFilter = 0; 	//If So, Set fogFilter To Zero back again ( NEW )
+							fogFilter = 0; 	
 						}
 	        		}
 	        		else
 	        		{
 	        			changeDoorState = true;
 	        		}
-	        	}
-	        	//light = !light;
-	        	
+	        	}	        	
 	        }
 	        if(event.getAction() == MotionEvent.ACTION_MOVE)
 	        {
@@ -425,8 +361,6 @@ public class Render extends GLSurfaceView implements Renderer {
 	        oldY = y;
 		}
         
-
-        //We handled the event
 		return true;
 	}
 	
@@ -443,7 +377,7 @@ public class Render extends GLSurfaceView implements Renderer {
      scaleFactor *= detector.getScaleFactor();
 
      // don't let the object get too small or too large.
-     scaleFactor = Math.max(0.1f, Math.min(scaleFactor, 5.0f));
+     scaleFactor = Math.max(0.1f, Math.min(scaleFactor, 10.0f));
 
      invalidate();
      return true;
