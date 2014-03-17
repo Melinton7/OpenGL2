@@ -24,7 +24,14 @@ public class Hojas {
 						-1.0f, -1.0f, -1.0f,	//Right Of Triangle (Back)
 						 0.0f,  1.5f, 0.0f,		//Top Of Triangle (Left)
 						-1.0f, -1.0f, -1.0f,	//Left Of Triangle (Left)
-						-1.0f, -1.0f, 1.0f		//Right Of Triangle (Left)
+						-1.0f, -1.0f, 1.0f,		//Right Of Triangle (Left)
+						-1.0f, -1.0f, 1.0f, 	//Upper left (bottom)
+						-1.0f, -1.0f, -1.0f,	//Lower left (bottom)
+						1.0f, -1.0f, -1.0f,		//Lower right (bottom)
+						-1.0f, -1.0f, 1.0f, 	//Upper left (bottom)
+						1.0f, -1.0f, -1.0f,		//Lower right (bottom)
+						1.0f, -1.0f, 1.0f		//Upper right (bottom)
+						
 											};
 	/** The initial color definition */	
 	private float colors[] = {

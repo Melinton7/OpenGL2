@@ -8,6 +8,7 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 import android.content.Context;
+import android.media.MediaPlayer;
 import android.opengl.GLSurfaceView;
 import android.opengl.GLU;
 import android.opengl.GLSurfaceView.Renderer;
@@ -47,6 +48,8 @@ public class Render extends GLSurfaceView implements Renderer {
 	private float xmov;
 	private float ymov;
 	
+
+	
 	private float z = -5.0f;			//Depth Into The Screen ( NEW )
 	
 	private int filter = 0;				//Which texture filter? ( NEW )
@@ -81,11 +84,20 @@ public class Render extends GLSurfaceView implements Renderer {
 	private final int CASA = 1;
 	private int selected = NONE;
 	
+	private final int DOOR_CLOSED = 7;
+	private final int DOOR_OPENED = 8;
+	private int doorState = NONE;
+	private boolean changeDoorState = false;
+	
 	private ScaleGestureDetector scaleGestureDetector;
 	private float scaleFactor = 1.0f;
 	
+	private final MediaPlayer mpOpen;
+	private final MediaPlayer mpClose;
+	
 	/** Angle For The Cube */
-	private float rquad; 
+	private float rquad=0; 
+	private float zquad=0;
 	
 	private Context context;
 	/**
@@ -99,6 +111,9 @@ public class Render extends GLSurfaceView implements Renderer {
 		this.setFocusableInTouchMode(true);
 		scaleGestureDetector = new ScaleGestureDetector(context,
 		        new ScaleListener());
+		
+		mpOpen = MediaPlayer.create(context, R.raw.open);
+		mpClose = MediaPlayer.create(context, R.raw.close);
 		//
 		ByteBuffer byteBuf = ByteBuffer.allocateDirect(lightAmbient.length * 4);
 		byteBuf.order(ByteOrder.nativeOrder());
@@ -193,12 +208,69 @@ public class Render extends GLSurfaceView implements Renderer {
 		//Reset Modelview
 		//gl.glLoadIdentity();
 		//gl.glTranslatef(0.0f, 0.0f, 0.0f);
-		puerta.draw(gl);
+		//puerta.draw(gl);
 		
 		//Techo
 		gl.glTranslatef(0.0f, 2.0f, 0.0f);//-2.0f, 0.8f, -10.0f);		
 		//gl.glRotatef(rtri, 0.0f, 1.0f, 0.0f);
-		techo.draw(gl);						//Draw the triangle	
+		techo.draw(gl);						//Draw the triangle
+		
+		
+		//gl.glTranslatef(-2.0f, -1.2f, -10.0f);//-2.0f, -1.2f, -10.0f);
+		gl.glTranslatef(0.0f, -2.0f, 0f);
+		
+		
+		if(doorState == DOOR_OPENED)
+		{
+			/*if(rquad < 135)
+				rquad += 5.0f;
+			if(zquad < 1.980f)
+				zquad += 0.740f;*/
+			rquad = 135;
+			gl.glTranslatef(0.0f, 0.0f, 1.980f);// 1.980f);
+			gl.glRotatef(rquad, 0.0f, -1.0f, 0.0f);
+			//gl.glTranslatef(-0.7f, -2.0f, 0.0f);
+		}
+		else if(doorState != NONE)
+		{
+			/*if(rquad > 0)
+				rquad -= 5.0f;
+			if(zquad > 0)
+				zquad -= 0.740f;*/
+			//gl.glTranslatef(-0.1f, -0.0f, 0.0f);
+			//rquad=0;
+			gl.glRotatef(0.0f, 0.0f, 1.0f, 0.0f);
+			//gl.glTranslatef(0.0f, -2.0f, 0.0f);
+		}		
+		if(changeDoorState)
+		{
+			System.out.println("cambio de estado, actual:" + doorState);
+			
+			switch (doorState)
+			{
+				case(DOOR_CLOSED):
+					//gl.glTranslatef(-0.5f, 0.0f, 0.0f);
+					mpOpen.start();
+					changeDoorState = false;
+					doorState = DOOR_OPENED;
+					break;
+				case(DOOR_OPENED):
+					//gl.glTranslatef(0.5f,  0.0f, 0.0f);
+					mpClose.start();
+					changeDoorState = false;
+					doorState = DOOR_CLOSED;
+					break;
+				case(NONE):
+					//gl.glTranslatef(0.5f,  0.0f, 0.0f);
+					mpOpen.start();
+					changeDoorState = false;
+					doorState = DOOR_OPENED;
+					break;
+			}
+
+		}
+		
+		puerta.draw(gl);
 		
 		//Reset
 		gl.glLoadIdentity();		
@@ -225,11 +297,11 @@ public class Render extends GLSurfaceView implements Renderer {
 		hojas.draw(gl);
 		
 		
-		xrot += yspeed;
+		xrot += xspeed;
 		yrot  += yspeed;
 		
 		//rtri +=0.5f;
-		rquad += 0.5f;
+		//rquad += 1.5f;
 	}	
 	
 	/**
@@ -298,7 +370,14 @@ public class Render extends GLSurfaceView implements Renderer {
 	        			selected = ARBOL;	        			
 	        	}
 	        	else if( y < upperArea )
-	        		selected = NONE;
+	        	{
+	        		if( x < leftArea)
+	        			selected = NONE;
+	        		else
+	        		{
+	        			changeDoorState = true;
+	        		}
+	        	}
 	        	//light = !light;
 	        	
 	        }
